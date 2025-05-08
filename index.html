@@ -14,8 +14,10 @@
     .grid {
       display: grid;
       grid-template-columns: repeat(3, 1fr);
-      grid-gap: 10px;
-      margin-top: 20px;
+      grid-gap: 5px;
+      margin: 20px auto;
+      width: 600px;
+      max-width: 90vw;
     }
     .cell {
       background: #fff;
@@ -48,9 +50,10 @@
   </style>
 </head>
 <body>
-  <h1>Custom 3x3 Image Grid Generator</h1>
+  <h2>Custom 3x3 Image Grid</h2>
+  <p style="margin-top: -10px; font-size: 14px; color: #666;">Upload 9 images to make a clean 3x3 grid</p>
+
   <div class="grid" id="grid">
-    <!-- 9 cells -->
     <div class="cell"><input type="file" accept="image/*" /></div>
     <div class="cell"><input type="file" accept="image/*" /></div>
     <div class="cell"><input type="file" accept="image/*" /></div>
@@ -61,6 +64,7 @@
     <div class="cell"><input type="file" accept="image/*" /></div>
     <div class="cell"><input type="file" accept="image/*" /></div>
   </div>
+
   <button onclick="downloadGrid()">Download Grid</button>
   <canvas id="canvas" width="900" height="900"></canvas>
 
@@ -89,7 +93,7 @@
     function downloadGrid() {
       const canvas = document.getElementById("canvas");
       const ctx = canvas.getContext("2d");
-      const size = 300; // each cell 300x300
+      const size = 300;
 
       ctx.clearRect(0, 0, canvas.width, canvas.height);
 
