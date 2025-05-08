@@ -25,6 +25,9 @@
       position: relative;
       aspect-ratio: 1 / 1;
       overflow: hidden;
+      resize: both;
+      overflow: hidden;
+      cursor: pointer;
     }
     .cell img {
       width: 100%;
@@ -54,15 +57,15 @@
   <p style="margin-top: -10px; font-size: 14px; color: #666;">Upload 9 images to make a clean 3x3 grid</p>
 
   <div class="grid" id="grid">
-    <div class="cell"><input type="file" accept="image/*" /></div>
-    <div class="cell"><input type="file" accept="image/*" /></div>
-    <div class="cell"><input type="file" accept="image/*" /></div>
-    <div class="cell"><input type="file" accept="image/*" /></div>
-    <div class="cell"><input type="file" accept="image/*" /></div>
-    <div class="cell"><input type="file" accept="image/*" /></div>
-    <div class="cell"><input type="file" accept="image/*" /></div>
-    <div class="cell"><input type="file" accept="image/*" /></div>
-    <div class="cell"><input type="file" accept="image/*" /></div>
+    <div class="cell" contenteditable="true"><input type="file" accept="image/*" /></div>
+    <div class="cell" contenteditable="true"><input type="file" accept="image/*" /></div>
+    <div class="cell" contenteditable="true"><input type="file" accept="image/*" /></div>
+    <div class="cell" contenteditable="true"><input type="file" accept="image/*" /></div>
+    <div class="cell" contenteditable="true"><input type="file" accept="image/*" /></div>
+    <div class="cell" contenteditable="true"><input type="file" accept="image/*" /></div>
+    <div class="cell" contenteditable="true"><input type="file" accept="image/*" /></div>
+    <div class="cell" contenteditable="true"><input type="file" accept="image/*" /></div>
+    <div class="cell" contenteditable="true"><input type="file" accept="image/*" /></div>
   </div>
 
   <button onclick="downloadGrid()">Download Grid</button>
@@ -71,6 +74,33 @@
   <script>
     const inputs = document.querySelectorAll(".cell input");
     const cells = document.querySelectorAll(".cell");
+
+    // Handle image pasting (from clipboard)
+    document.addEventListener('paste', (event) => {
+      const clipboardData = event.clipboardData;
+      if (clipboardData && clipboardData.items) {
+        const items = clipboardData.items;
+        for (let i = 0; i < items.length; i++) {
+          const item = items[i];
+          if (item.kind === 'file' && item.type.startsWith('image/')) {
+            const file = item.getAsFile();
+            const reader = new FileReader();
+            reader.onload = (e) => {
+              const img = new Image();
+              img.src = e.target.result;
+              img.onload = () => {
+                const targetCell = document.querySelector(".cell:hover"); // Detect the currently hovered cell
+                if (targetCell) {
+                  targetCell.innerHTML = ''; // Clear current content
+                  targetCell.appendChild(img);
+                }
+              };
+            };
+            reader.readAsDataURL(file);
+          }
+        }
+      }
+    });
 
     inputs.forEach((input, index) => {
       input.addEventListener("change", (e) => {
