@@ -18,6 +18,7 @@
       margin: 20px auto;
       width: 600px;
       max-width: 90vw;
+      transition: width 0.3s ease;
     }
     .cell {
       background: #fff;
@@ -25,14 +26,16 @@
       position: relative;
       aspect-ratio: 1 / 1;
       overflow: hidden;
-      resize: both;
-      overflow: hidden;
+      display: flex;
+      justify-content: center;
+      align-items: center;
       cursor: pointer;
     }
     .cell img {
       width: 100%;
       height: 100%;
       object-fit: cover;
+      transition: all 0.3s ease;
     }
     .cell input[type="file"] {
       position: absolute;
@@ -47,59 +50,176 @@
       font-size: 16px;
       cursor: pointer;
     }
+    .resize-option {
+      margin-top: 20px;
+    }
+    .download-options, .resize-options, .border-options {
+      display: flex;
+      justify-content: center;
+      gap: 10px;
+      margin-top: 20px;
+    }
+    .download-options select, .resize-options select, .border-options select {
+      font-size: 14px;
+      padding: 5px;
+    }
     canvas {
       display: none;
+    }
+    .mini-logo {
+      position: absolute;
+      top: 10px;
+      right: 10px;
+      width: 40px;
+      height: 40px;
+      background-image: url('https://path_to_your_logo.png'); /* Replace with your logo image */
+      background-size: cover;
+      cursor: pointer;
+    }
+    .hidden-options {
+      display: none;
+      margin-top: 10px;
     }
   </style>
 </head>
 <body>
+  <div class="mini-logo" onclick="window.location.href='https://github.com/your-repository-link';"></div>
+
   <h2>Custom 3x3 Image Grid</h2>
   <p style="margin-top: -10px; font-size: 14px; color: #666;">Upload 9 images to make a clean 3x3 grid</p>
 
   <div class="grid" id="grid">
-    <div class="cell" contenteditable="true"><input type="file" accept="image/*" /></div>
-    <div class="cell" contenteditable="true"><input type="file" accept="image/*" /></div>
-    <div class="cell" contenteditable="true"><input type="file" accept="image/*" /></div>
-    <div class="cell" contenteditable="true"><input type="file" accept="image/*" /></div>
-    <div class="cell" contenteditable="true"><input type="file" accept="image/*" /></div>
-    <div class="cell" contenteditable="true"><input type="file" accept="image/*" /></div>
-    <div class="cell" contenteditable="true"><input type="file" accept="image/*" /></div>
-    <div class="cell" contenteditable="true"><input type="file" accept="image/*" /></div>
-    <div class="cell" contenteditable="true"><input type="file" accept="image/*" /></div>
+    <div class="cell"><input type="file" accept="image/*" /></div>
+    <div class="cell"><input type="file" accept="image/*" /></div>
+    <div class="cell"><input type="file" accept="image/*" /></div>
+    <div class="cell"><input type="file" accept="image/*" /></div>
+    <div class="cell"><input type="file" accept="image/*" /></div>
+    <div class="cell"><input type="file" accept="image/*" /></div>
+    <div class="cell"><input type="file" accept="image/*" /></div>
+    <div class="cell"><input type="file" accept="image/*" /></div>
+    <div class="cell"><input type="file" accept="image/*" /></div>
   </div>
 
-  <button onclick="downloadGrid()">Download Grid</button>
+  <div class="resize-option">
+    <label>
+      <input type="radio" name="resize-option" value="resize-image" checked />
+      Resize Image Only
+    </label>
+    <label>
+      <input type="radio" name="resize-option" value="resize-grid" />
+      Resize Entire Grid
+    </label>
+  </div>
+
+  <div class="resize-options">
+    <label>Grid Size:</label>
+    <select id="grid-size">
+      <option value="3x3" selected>3x3</option>
+      <option value="2x2">2x2</option>
+      <option value="4x4">4x4</option>
+      <option value="5x5">5x5</option>
+    </select>
+  </div>
+
+  <div class="download-options">
+    <button onclick="downloadGrid()">Download</button>
+    <select id="download-format">
+      <option value="jpeg">JPEG</option>
+      <option value="png">PNG</option>
+      <option value="webp">WebP</option>
+    </select>
+  </div>
+
+  <div class="border-options">
+    <label>Border Size:</label>
+    <select id="border-size">
+      <option value="1">1px</option>
+      <option value="2">2px</option>
+      <option value="3">3px</option>
+    </select>
+    <label>Border Color:</label>
+    <input type="color" id="border-color" value="#cccccc" />
+  </div>
+
+  <div class="hidden-options">
+    <label>
+      <input type="checkbox" id="upscale-option" />
+      Enable Upscaling (1-12)
+    </label>
+    <div id="upscale-values" style="display: none;">
+      <label for="upscale-level">Upscale Level:</label>
+      <select id="upscale-level">
+        <option value="1">1x</option>
+        <option value="2">2x</option>
+        <option value="3">3x</option>
+        <option value="12">12x</option>
+      </select>
+    </div>
+  </div>
+
   <canvas id="canvas" width="900" height="900"></canvas>
 
   <script>
     const inputs = document.querySelectorAll(".cell input");
     const cells = document.querySelectorAll(".cell");
+    const resizeOptions = document.querySelectorAll('input[name="resize-option"]');
+    const gridSizeSelect = document.getElementById("grid-size");
+    const downloadFormatSelect = document.getElementById("download-format");
+    const borderSizeSelect = document.getElementById("border-size");
+    const borderColorInput = document.getElementById("border-color");
+    const upscaleCheckbox = document.getElementById("upscale-option");
+    const upscaleValuesDiv = document.getElementById("upscale-values");
+    const upscaleLevelSelect = document.getElementById("upscale-level");
 
-    // Handle image pasting (from clipboard)
-    document.addEventListener('paste', (event) => {
-      const clipboardData = event.clipboardData;
-      if (clipboardData && clipboardData.items) {
-        const items = clipboardData.items;
-        for (let i = 0; i < items.length; i++) {
-          const item = items[i];
-          if (item.kind === 'file' && item.type.startsWith('image/')) {
-            const file = item.getAsFile();
-            const reader = new FileReader();
-            reader.onload = (e) => {
-              const img = new Image();
-              img.src = e.target.result;
-              img.onload = () => {
-                const targetCell = document.querySelector(".cell:hover"); // Detect the currently hovered cell
-                if (targetCell) {
-                  targetCell.innerHTML = ''; // Clear current content
-                  targetCell.appendChild(img);
-                }
-              };
-            };
-            reader.readAsDataURL(file);
-          }
-        }
+    let resizeMode = 'resize-image';
+    let gridSize = '3x3';
+    let borderSize = '1';
+    let borderColor = '#cccccc';
+
+    function updateGrid() {
+      const grid = document.getElementById('grid');
+      if (gridSize === '2x2') {
+        grid.style.gridTemplateColumns = 'repeat(2, 1fr)';
+      } else if (gridSize === '3x3') {
+        grid.style.gridTemplateColumns = 'repeat(3, 1fr)';
+      } else if (gridSize === '4x4') {
+        grid.style.gridTemplateColumns = 'repeat(4, 1fr)';
+      } else if (gridSize === '5x5') {
+        grid.style.gridTemplateColumns = 'repeat(5, 1fr)';
       }
+    }
+
+    gridSizeSelect.addEventListener('change', () => {
+      gridSize = gridSizeSelect.value;
+      updateGrid();
+    });
+
+    resizeOptions.forEach(option => {
+      option.addEventListener("change", (e) => {
+        resizeMode = e.target.value;
+      });
+    });
+
+    downloadFormatSelect.addEventListener('change', () => {
+      const format = downloadFormatSelect.value;
+    });
+
+    borderSizeSelect.addEventListener('change', () => {
+      borderSize = borderSizeSelect.value;
+      cells.forEach(cell => {
+        cell.style.borderWidth = borderSize + 'px';
+      });
+    });
+
+    borderColorInput.addEventListener('input', () => {
+      borderColor = borderColorInput.value;
+      cells.forEach(cell => {
+        cell.style.borderColor = borderColor;
+      });
+    });
+
+    upscaleCheckbox.addEventListener('change', () => {
+      upscaleValuesDiv.style.display = upscaleCheckbox.checked ? 'block' : 'none';
     });
 
     inputs.forEach((input, index) => {
@@ -137,10 +257,12 @@
       });
 
       const link = document.createElement("a");
-      link.download = "3x3-grid.png";
-      link.href = canvas.toDataURL();
+      link.download = `3x3-grid.${downloadFormatSelect.value}`;
+      link.href = canvas.toDataURL(`image/${downloadFormatSelect.value}`);
       link.click();
     }
+
+    updateGrid();  // Initial grid size setup
   </script>
 </body>
 </html>
